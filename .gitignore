@@ -3,6 +3,7 @@
 !/.gitignore
 !requirements.txt
 !.env.example
+!build.sh
 
 # Python
 venv/
