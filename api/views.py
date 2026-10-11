@@ -3,14 +3,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from django.utils import timezone
-from datetime import datetime, date
+from datetime import datetime
 from decimal import Decimal
 
 from django.contrib.auth.models import User
 from .models import Category, Expense, Budget
 from .serializers import (
+    RegisterSerializer,
     CategorySerializer,
     ExpenseSerializer,
     BudgetSerializer,
@@ -23,59 +24,10 @@ from .permissions import IsOwner
 #  AUTH — REGISTER
 # ─────────────────────────────────────────────────────
 class RegisterView(generics.CreateAPIView):
-    """
-    Inscription d'un nouvel utilisateur.
-    """
+    from .serializers import RegisterSerializer
     queryset = User.objects.all()
+    serializer_class = RegisterSerializer        # ← la ligne qui manquait !
     permission_classes = [AllowAny]
-
-    def create(self, request, *args, **kwargs):
-        from django.contrib.auth.password_validation import validate_password
-        from django.core.exceptions import ValidationError
-
-        username = request.data.get('username')
-        email = request.data.get('email')
-        password = request.data.get('password')
-
-        # Validations basiques
-        if not username or not password:
-            return Response(
-                {'error': "username et password sont requis."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if User.objects.filter(username=username).exists():
-            return Response(
-                {'error': "Ce nom d'utilisateur existe déjà."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Validation du mot de passe via Django
-        try:
-            validate_password(password)
-        except ValidationError as e:
-            return Response(
-                {'error': list(e.messages)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Création
-        user = User.objects.create_user(
-            username=username,
-            email=email or '',
-            password=password
-        )
-
-        return Response(
-            {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'message': "Utilisateur créé avec succès."
-            },
-            status=status.HTTP_201_CREATED
-        )
-
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """

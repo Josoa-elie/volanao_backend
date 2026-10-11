@@ -7,34 +7,46 @@ from django.db.models import Sum
 from .models import Category, Expense, Budget 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    '''Inscription d'un nouvel utilisateur'''
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, required=True)
-    
+    """
+    Serializer pour l'inscription d'un nouvel utilisateur.
+    Valide username, email et password.
+    """
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        min_length=8,
+        style={'input_type': 'password'}
+    )
+    email = serializers.EmailField(required=False, allow_blank=True)
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'password2')
-        extra_kwargs = {'email': {'required': True}}
-        
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({"password": "Les mots de passe ne correspondent pas."})
-        return attrs
-    
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Cet email est déjà utilisé.")
+        fields = ['id', 'username', 'email', 'password']
+        read_only_fields = ['id']
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError(
+                "Ce nom d'utilisateur existe déjà."
+            )
         return value
-    
+
+    def validate_password(self, value):
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError
+        try:
+            validate_password(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
+
     def create(self, validated_data):
-        validated_data.pop('password2')
         user = User.objects.create_user(
             username=validated_data['username'],
-            email=validated_data['email'],
+            email=validated_data.get('email', ''),
             password=validated_data['password']
         )
-        return user
-    
+        return user 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
