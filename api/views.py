@@ -24,10 +24,19 @@ from .permissions import IsOwner
 #  AUTH — REGISTER
 # ─────────────────────────────────────────────────────
 class RegisterView(generics.CreateAPIView):
-    from .serializers import RegisterSerializer
     queryset = User.objects.all()
-    serializer_class = RegisterSerializer        # ← la ligne qui manquait !
+    serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        return Response(
+            {
+                'detail': 'Utilisez POST pour créer un compte.',
+                'method': 'POST',
+                'endpoint': '/api/auth/register/'
+            },
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """
