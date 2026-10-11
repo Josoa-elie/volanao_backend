@@ -42,6 +42,11 @@ CORS_ALLOWED_ORIGINS = config(
     cast=Csv()
 )
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://volanao-back.onrender.com',
+    'https://volanao-frontend.onrender.com',
+]
+
 # Application definition
 
 INSTALLED_APPS = [
